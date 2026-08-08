@@ -1,0 +1,13 @@
+{
+  "Name": "Forge",
+  "DisplayName": "Forge",
+  "Description": "Generic web app template used for a Forge to AMP migration and GitHub Pages configuration repo.",
+  "Version": "1.0.0",
+  "Author": "Frenzy13",
+  "Source": "https://github.com/Frenzy13/ForgeAMPTemplate",
+  "Branch": "main",
+  "Category": "Web",
+  "Tags": ["forge", "web", "node", "github-pages", "amp"],
+  "Platforms": ["Windows", "Linux"],
+  "Status": "Draft"
+}
