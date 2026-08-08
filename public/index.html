@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AMP Configuration Repo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="card">
+        <p class="eyebrow">AMP / GitHub Pages</p>
+        <h1>AMP Configuration Repo</h1>
+        <p class="subtitle">
+          This local repo detects available network addresses, prefers Tailscale endpoints, and filters out Radmin-style addresses before letting you choose the target.
+        </p>
+
+        <div id="config" class="config-grid">
+          <div class="loading">Loading AMP config...</div>
+        </div>
+      </section>
+
+      <section class="card chooser-card">
+        <div class="chooser-header">
+          <div>
+            <p class="eyebrow small">Endpoint chooser</p>
+            <h2>Detected network addresses</h2>
+          </div>
+          <button id="refreshIps" type="button">Refresh</button>
+        </div>
+        <div id="ipList" class="ip-list">
+          <div class="loading">Detecting IPs...</div>
+        </div>
+      </section>
+
+      <section class="card instructions">
+        <h2>How to use this repo</h2>
+        <ol>
+          <li>Replace the placeholder values in <strong>server.js</strong> and <strong>public/index.html</strong> with your repo and GitHub Pages URL.</li>
+          <li>Use the chooser to pick the preferred Tailscale address and ignore Radmin entries.</li>
+          <li>Push this folder to a GitHub repository.</li>
+          <li>Enable GitHub Pages in the repo settings.</li>
+          <li>Paste the published GitHub Pages URL into AMP.</li>
+        </ol>
+      </section>
+    </main>
+
+    <script>
+      const isTailscaleIp = (value) => {
+        const ip = String(value || '').trim();
+        if (!ip) return false;
+        return ip.startsWith('100.') || ip.startsWith('fd7a:') || ip.startsWith('fd8a:');
+      };
+
+      const isRadminIp = (value) => {
+        const ip = String(value || '').trim();
+        if (!ip || ip === '0.0.0.0' || ip === '::1' || ip.startsWith('127.') || ip.startsWith('169.254.')) {
+          return true;
+        }
+
+        if (/^10\./.test(ip) || /^192\.168\./.test(ip) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)) {
+          return true;
+        }
+
+        return false;
+      };
+
+      const normalizeIp = (value) => {
+        const ip = String(value || '').trim();
+        return ip.split('%')[0];
+      };
+
+      const detectLocalAddresses = () => {
+        return new Promise((resolve) => {
+          const addresses = new Set();
+
+          if (!window.RTCPeerConnection) {
+            resolve([]);
+            return;
+          }
+
+          const rtc = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+          });
+
+          rtc.onicecandidate = (event) => {
+            if (!event.candidate || !event.candidate.candidate) return;
+            const match = event.candidate.candidate.match(/((?:\d{1,3}\.){3}\d{1,3}|(?:[a-fA-F0-9:]+))/g);
+            if (!match) return;
+            const candidate = normalizeIp(match[0]);
+            if (candidate && candidate !== '0.0.0.0') {
+              addresses.add(candidate);
+            }
+          };
+
+          rtc.createDataChannel('amp-config');
+          rtc.createOffer()
+            .then((offer) => rtc.setLocalDescription(offer))
+            .catch(() => {});
+
+          setTimeout(() => {
+            rtc.close();
+            resolve([...addresses]);
+          }, 1200);
+        });
+      };
+
+      const buildTargetOptions = (addresses) => {
+        const distinct = [...new Set(addresses.map(normalizeIp).filter(Boolean))]
+          .filter((ip) => !isRadminIp(ip))
+          .sort((a, b) => {
+            const score = (ip) => (isTailscaleIp(ip) ? 1 : 0);
+            return score(b) - score(a);
+          });
+
+        return distinct;
+      };
+
+      const renderIpChooser = (ips) => {
+        const ipList = document.getElementById('ipList');
+
+        if (!ips.length) {
+          ipList.innerHTML = '<div class="empty-state">No usable Tailscale or LAN IPs detected. Use the GitHub Pages URL above.</div>';
+          return;
+        }
+
+        const selectedIp = ips[0];
+
+        ipList.innerHTML = ips
+          .map((ip, index) => {
+            const label = isTailscaleIp(ip) ? 'Tailscale' : 'LAN';
+            const checked = index === 0 ? 'checked' : '';
+            return `
+              <label class="ip-option ${checked ? 'selected' : ''}">
+                <input type="radio" name="selectedIp" value="${ip}" ${checked} />
+                <span class="ip-main">${ip}</span>
+                <span class="ip-tag">${label}</span>
+              </label>
+            `;
+          })
+          .join('');
+
+        ipList.querySelectorAll('input[name="selectedIp"]').forEach((input) => {
+          input.addEventListener('change', (event) => {
+            const chosenIp = event.target.value;
+            const choiceEl = document.getElementById('chosenTarget');
+            if (choiceEl) {
+              choiceEl.textContent = `Target: http://${chosenIp}:3000`;
+            }
+          });
+        });
+
+        const choiceEl = document.getElementById('chosenTarget');
+        if (choiceEl) {
+          choiceEl.remove();
+        }
+
+        const selectedInfo = document.createElement('div');
+        selectedInfo.id = 'chosenTarget';
+        selectedInfo.className = 'selected-target';
+        selectedInfo.textContent = `Target: http://${selectedIp}:3000`;
+        ipList.appendChild(selectedInfo);
+      };
+
+      document.getElementById('refreshIps').addEventListener('click', async () => {
+        const ipList = document.getElementById('ipList');
+        ipList.innerHTML = '<div class="loading">Detecting IPs...</div>';
+        const addresses = await detectLocalAddresses();
+        renderIpChooser(buildTargetOptions(addresses));
+      });
+
+      fetch('/api/config')
+        .then((response) => response.json())
+        .then((config) => {
+          const configEl = document.getElementById('config');
+          configEl.innerHTML = `
+            <div><span>Name</span><strong>${config.name}</strong></div>
+            <div><span>Version</span><strong>${config.version}</strong></div>
+            <div><span>Repo</span><strong>${config.repo}</strong></div>
+            <div><span>GitHub Pages</span><strong>${config.githubPagesUrl}</strong></div>
+            <div><span>AMP URL</span><strong>${config.ampAddUrl}</strong></div>
+            <div><span>Description</span><strong>${config.description}</strong></div>
+          `;
+
+          detectLocalAddresses().then((addresses) => {
+            renderIpChooser(buildTargetOptions(addresses));
+          });
+        })
+        .catch(() => {
+          document.getElementById('config').innerHTML = '<div class="error">Unable to load config.</div>';
+        });
+    </script>
+  </body>
+</html>
