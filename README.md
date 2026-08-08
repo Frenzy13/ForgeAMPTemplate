@@ -26,9 +26,10 @@ This workspace is a lightweight Node.js app that serves a static AMP configurati
 5. Save the Pages settings.
 6. Use the generated GitHub Pages URL in AMP.
 
-Example URL pattern:
+For this repo, the expected public URLs are:
 ```text
-https://<your-user>.github.io/<your-repo>/
+https://github.com/Frenzy13/ForgeAMPTemplate
+https://Frenzy13.github.io/ForgeAMPTemplate/
 ```
 
 ## Files you may want to update

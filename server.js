@@ -5,11 +5,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const config = {
-  name: 'AMP Configuration Repo',
-  description: 'Static site for AMP configuration data and GitHub Pages hosting.',
-  repo: 'https://github.com/<your-user>/<your-repo>',
-  githubPagesUrl: 'https://<your-user>.github.io/<your-repo>/',
-  ampAddUrl: 'https://<your-user>.github.io/<your-repo>/',
+  name: 'ForgeAMPTemplate',
+  description: 'Forge to AMP migration template and configuration repo for GitHub Pages hosting.',
+  repo: 'https://github.com/Frenzy13/ForgeAMPTemplate',
+  githubPagesUrl: 'https://Frenzy13.github.io/ForgeAMPTemplate/',
+  ampAddUrl: 'https://Frenzy13.github.io/ForgeAMPTemplate/',
   version: '1.0.0'
 };
 
