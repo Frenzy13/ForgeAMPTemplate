@@ -1,0 +1,11 @@
+{
+  "Updates": [
+    {
+      "Name": "Forge",
+      "Description": "Default update source for the Forge AMP template.",
+      "Source": "github",
+      "Repo": "Frenzy13/ForgeAMPTemplate",
+      "Branch": "main"
+    }
+  ]
+}

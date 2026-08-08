@@ -1,0 +1,18 @@
+{
+  "Meta": {
+    "DisplayName": "Forge",
+    "Description": "Metadata for the Forge template repo used by AMP instance creation."
+  },
+  "Config": {
+    "AppName": "Forge",
+    "Category": "Web",
+    "Type": "NodeJS",
+    "Executable": "node",
+    "WorkingDirectory": "./",
+    "MainFile": "server.js",
+    "Port": 3000,
+    "Autostart": false,
+    "Proxy": false,
+    "RequiresInternet": false
+  }
+}

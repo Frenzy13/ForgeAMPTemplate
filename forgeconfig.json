@@ -1,0 +1,23 @@
+{
+  "Meta": {
+    "DisplayName": "Forge",
+    "Description": "Forge AMP template for a Node.js web app used as a static config or landing page.",
+    "Version": "1.0.0"
+  },
+  "Config": [
+    {
+      "Name": "Port",
+      "Description": "Port the app listens on.",
+      "Type": "Integer",
+      "Default": 3000,
+      "Min": 1,
+      "Max": 65535
+    },
+    {
+      "Name": "NodePath",
+      "Description": "Path to the Node.js executable.",
+      "Type": "String",
+      "Default": "node"
+    }
+  ]
+}

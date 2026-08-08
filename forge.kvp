@@ -1,0 +1,10 @@
+App.DisplayName=Forge
+App.RootDir=./
+App.WorkingDir=./
+App.Port=3000
+App.Protocol=http
+App.CommandLine=node server.js
+App.EnvironmentVariables=
+App.HasSettings=true
+App.IsUsingCustomSchema=true
+App.DisplayNameLower=forge
